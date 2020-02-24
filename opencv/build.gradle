@@ -1,0 +1,69 @@
+apply plugin: 'com.android.library'
+
+println "OpenCV: " + project.buildscript.sourceFile
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 19
+        targetSdkVersion 29
+
+//        externalNativeBuild {
+//            cmake {
+//                arguments "-DANDROID_STL=c++_shared"
+//                targets "opencv_jni_shared"
+//            }
+//        }
+    }
+
+//    buildTypes {
+//        debug {
+//            packagingOptions {
+//                doNotStrip '**/*.so'  // controlled by OpenCV CMake scripts
+//            }
+//        }
+//        release {
+//            packagingOptions {
+//                doNotStrip '**/*.so'  // controlled by OpenCV CMake scripts
+//            }
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+//        }
+//    }
+//    compileOptions {
+//        sourceCompatibility JavaVersion.VERSION_1_6
+//        targetCompatibility JavaVersion.VERSION_1_6
+//    }
+//
+    sourceSets {
+        main {
+//            jniLibs.srcDirs = ['native/libs']
+//            java.srcDirs = ['java/src']
+            aidl.srcDirs = ['src/main/java']
+//            res.srcDirs = ['java/res']
+//            manifest.srcFile 'java/AndroidManifest.xml'
+        }
+    }
+//
+//    externalNativeBuild {
+//        cmake {
+//            version = '3.10.2'
+//            path (project.projectDir.toString() + '/CMakeLists.txt')
+//        }
+//    }
+}
+
+//task nativeLibsToJar(type:Jar, description: 'create a jar archive of the native libs') {
+//    destinationDir file("buildDir/native-libs")
+//    baseName 'native-libs'
+//    from fileTree(dir:'libs', include:'**/*.so')
+//    into 'lib/'
+//}
+//
+//tasks.withType(JavaCompile) {
+//    compileTask -> compileTask.dependsOn(nativeLibsToJar)
+//}
+
+dependencies {
+}
