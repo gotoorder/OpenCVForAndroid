@@ -1,2 +1,3 @@
-include ':app', ':test', ':opencv'
+include ':app', ':test'
 rootProject.name='OpenCV'
+include ':OpenCVLibrary420'
