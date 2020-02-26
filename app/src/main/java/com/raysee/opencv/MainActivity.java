@@ -1,5 +1,7 @@
 package com.raysee.opencv;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RawRes;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
@@ -8,6 +10,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -20,6 +23,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.raysee.dlib.dlib.Constants;
+import com.raysee.dlib.dlib.FaceDet;
+import com.raysee.dlib.dlib.VisionDetRet;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -35,6 +42,9 @@ import org.opencv.imgproc.Imgproc;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
@@ -49,6 +59,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     boolean targetChose = false;
     ProgressDialog dlg;
     private boolean hasCut =false;
+
+    private FaceDet mFaceDet;
 
 //    static {
 //        try{
@@ -69,6 +81,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         setContentView(R.layout.activity_main);
 
         initViews();
+        if (mFaceDet == null) {
+            final String targetPath = Constants.getFaceShapeModelPath();
+            if (!new File(targetPath).exists()) {
+                Log.d("rzc", "targetPath not exist");
+                copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_81_face_landmarks, targetPath);
+            } else {
+                Log.d("rzc", targetPath + " exist.");
+            }
+            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        }
     }
 
     private void initViews() {
@@ -212,7 +234,26 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     //从图库中选择图片
     public void setPic(){
         originalBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
-        mResourcePicture.setBmpPath(mCurrentPhotoPath);
+//        mResourcePicture.setBmpPath(mCurrentPhotoPath);
+
+        onFaceDetect(mCurrentPhotoPath);
+    }
+
+    private void onFaceDetect(String currentPhotoPath) {
+        List<VisionDetRet> detect = mFaceDet.detect(currentPhotoPath);
+        if (detect != null && detect.size() > 0) {
+            VisionDetRet detRet = detect.get(0);
+            float confidence = detRet.getConfidence();
+            int top = detRet.getTop();
+            int left = detRet.getLeft();
+            int bottom = detRet.getBottom();
+            int right = detRet.getRight();
+            ArrayList<Point> landmarks = detRet.getFaceLandmarks();
+            mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
+        } else {
+            Toast.makeText(this, "No Face !!", Toast.LENGTH_LONG).show();
+            mResourcePicture.setBmpPath(mCurrentPhotoPath);
+        }
     }
 
     //选择剪切区域
@@ -259,6 +300,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         if (dlg != null) {
             dlg.dismiss();
         }
+        if (mFaceDet != null) {
+            mFaceDet.release();
+        }
     }
     //保存在系统图库
     public static String saveImageToGalleryString(Context context, Bitmap bmp) {
@@ -290,6 +334,28 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return null;
     }
 
-
+    public void copyFileFromRawToOthers(@NonNull final Context context, @RawRes int id, @NonNull final String targetPath) {
+        InputStream in = context.getResources().openRawResource(id);
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(targetPath);
+            byte[] buff = new byte[1024];
+            int read = 0;
+            while ((read = in.read(buff)) > 0) {
+                out.write(buff, 0, read);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                in.close();
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
 }

@@ -82,10 +82,10 @@ public class CropView extends View {
         // TODO Auto-generated method stub
         // super.onDraw(canvas);
         if (mBmpPath != null) {
-            canvas.drawBitmap(mBmpToCrop, null, mBmpBound, mBmpPaint);
+            canvas.drawBitmap(mBmpToCrop, null, mBorderBound, mBmpPaint);
             canvas.drawRect(mBorderBound.left, mBorderBound.top, mBorderBound.right, mBorderBound.bottom, mBorderPaint);
             drawGuidlines(canvas);
-            drawBackground(canvas);
+//            drawBackground(canvas);
         }
     }
 
@@ -167,6 +167,18 @@ public class CropView extends View {
 
     }
 
+    public void setRect(int left, int top, int right, int bottom, String path) {
+        mBmpToCrop = BitmapFactory.decodeFile(path);
+        mBorderBound = new RectF();
+        mBorderBound.left = left;
+        mBorderBound.top = top;
+        mBorderBound.right = right;
+        mBorderBound.bottom = bottom;
+
+        getBorderEdgeLength();
+        invalidate();
+    }
+
     private void setBmp() {
 
         mBmpToCrop = BitmapFactory.decodeFile(mBmpPath);
@@ -176,7 +188,11 @@ public class CropView extends View {
         mBmpBound.top = BMP_TOP;
         mBmpBound.right = mBmpBound.left + mBmpToCrop.getWidth();
         mBmpBound.bottom = mBmpBound.top + mBmpToCrop.getHeight();
+        setBorderBound();
 
+    }
+
+    private void setBorderBound() {
         // 使裁剪框一开始出现在图片的中心位置
         mDefaultBorderBound = new RectF();
         mDefaultBorderBound.left = (mBmpBound.left + mBmpBound.right - DEFAULT_BORDER_RECT_WIDTH) / 2;

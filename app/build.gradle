@@ -16,9 +16,9 @@ android {
 //                arguments "-DANDROID_STL=c++_shared"
 //            }
 //        }
-        ndk {
-            abiFilters 'armeabi-v7a','arm64-v8a'
-        }
+//        ndk {
+//            abiFilters 'armeabi-v7a','arm64-v8a'
+//        }
     }
     buildTypes {
         release {
@@ -48,6 +48,7 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
     implementation project(path: ':opencv')
+    implementation project(path: ':dlib')
 //    implementation fileTree(dir:"$buildDir/native-libs", include: 'native-libs.jar' )
 }
 
