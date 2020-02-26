@@ -61,7 +61,7 @@ public class BaseActivity extends AppCompatActivity {
     private static boolean verifyPermissions(Activity activity) {
         // Check if we have write permission
         int write_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        int read_persmission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int read_persmission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE);
         int camera_permission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.CAMERA);
 
         if (write_permission != PackageManager.PERMISSION_GRANTED ||
