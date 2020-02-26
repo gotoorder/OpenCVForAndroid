@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -36,7 +37,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
     private CropView mResourcePicture;
@@ -236,11 +237,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     Cursor cursor = getContentResolver().query(imgUri, filePathColumn,
                             null, null, null);
-                    cursor.moveToFirst();
-
-                    int colIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    mCurrentPhotoPath = cursor.getString(colIndex);
-                    cursor.close();
+                    if (cursor != null) {
+                        cursor.moveToFirst();
+                        int colIndex = cursor.getColumnIndex(filePathColumn[0]);
+                        mCurrentPhotoPath = cursor.getString(colIndex);
+                        if (TextUtils.isEmpty(mCurrentPhotoPath)) {
+                            Toast.makeText(MainActivity.this, "can not get Photo path!", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        cursor.close();
+                    }
                     setPic();
                 }
                 break;
