@@ -245,7 +245,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void onFaceDetect(String currentPhotoPath, Bitmap originalBitmap) {
-        List<VisionDetRet> faceList = mFaceDet.detect(currentPhotoPath);
+        //对图片进行缩放处理
+        originalBitmap = scaleBitmap(originalBitmap, 0.3f);
+        Log.d("rzc", "new originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
+
+        List<VisionDetRet> faceList = mFaceDet.detect(originalBitmap);
         if (faceList != null && faceList.size() > 0) {
             VisionDetRet detRet = faceList.get(0);
             float confidence = detRet.getConfidence();
@@ -254,10 +258,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             int bottom = detRet.getBottom();
             int right = detRet.getRight();
             ArrayList<Point> landmarks = detRet.getFaceLandmarks();
-
-
-            originalBitmap = scaleBitmap(originalBitmap, 0.3f);
-            Log.d("rzc", "new originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
 
             long start = System.currentTimeMillis();
             Bitmap bitmap = processMask(faceList, originalBitmap);
@@ -276,49 +276,46 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             //目前只检测一张脸
             VisionDetRet detRet = faceList.get(0);
             if (detRet != null) {
-                float confidence = detRet.getConfidence();
-                int left = detRet.getLeft();
-                int right = detRet.getRight();
-                int top = detRet.getTop();
-                int bottom = detRet.getBottom();
 
                 /**
                  * 方案一
                  */
                 ArrayList<Point> faceLandmarks = detRet.getFaceLandmarks();
-                ArrayList<MatOfPoint> points = new ArrayList<>();
+                ArrayList<MatOfPoint> matOfPoints = new ArrayList<>();
+                ArrayList<org.opencv.core.Point> points = new ArrayList<>();
                 for (int i = 0; i<17; i++) {
                     Point p = faceLandmarks.get(i);
                     org.opencv.core.Point point = new org.opencv.core.Point(p.x, p.y);
-                    MatOfPoint matOfPoint = new MatOfPoint(point);
-                    points.add(matOfPoint);
+                    points.add(point);
                 }
 
-                ArrayList<MatOfPoint> tempMatOfPoints = new ArrayList<>();
+                ArrayList<org.opencv.core.Point> tempPoints = new ArrayList<>();
                 for (int i = 68;i<81;i++) {
                     Point p = faceLandmarks.get(i);
                     org.opencv.core.Point point = new org.opencv.core.Point(p.x, p.y);
-                    MatOfPoint matOfPoint = new MatOfPoint(point);
-                    tempMatOfPoints.add(matOfPoint);
+                    tempPoints.add(point);
                 }
 
-                ArrayList<MatOfPoint> matOfPoints2 = new ArrayList<>();
-                matOfPoints2.add(tempMatOfPoints.get(10));
-                matOfPoints2.add(tempMatOfPoints.get(6));
-                matOfPoints2.add(tempMatOfPoints.get(11));
-                matOfPoints2.add(tempMatOfPoints.get(5));
-                matOfPoints2.add(tempMatOfPoints.get(4));
-                matOfPoints2.add(tempMatOfPoints.get(12));
-                matOfPoints2.add(tempMatOfPoints.get(3));
-                matOfPoints2.add(tempMatOfPoints.get(2));
-                matOfPoints2.add(tempMatOfPoints.get(1));
-                matOfPoints2.add(tempMatOfPoints.get(0));
-                matOfPoints2.add(tempMatOfPoints.get(8));
-                matOfPoints2.add(tempMatOfPoints.get(7));
-                matOfPoints2.add(tempMatOfPoints.get(9));
+                ArrayList<org.opencv.core.Point> points2 = new ArrayList<>();
+                points2.add(tempPoints.get(10));
+                points2.add(tempPoints.get(6));
+                points2.add(tempPoints.get(11));
+                points2.add(tempPoints.get(5));
+                points2.add(tempPoints.get(4));
+                points2.add(tempPoints.get(12));
+                points2.add(tempPoints.get(3));
+                points2.add(tempPoints.get(2));
+                points2.add(tempPoints.get(1));
+                points2.add(tempPoints.get(0));
+                points2.add(tempPoints.get(8));
+                points2.add(tempPoints.get(7));
+                points2.add(tempPoints.get(9));
 
-                points.addAll(matOfPoints2);
+                points.addAll(points2);
 
+                MatOfPoint matOfPoint = new MatOfPoint();
+                matOfPoint.fromList(points);
+                matOfPoints.add(matOfPoint);
 
                 Mat src = new Mat();
                 Utils.bitmapToMat(bitmap, src);
@@ -327,14 +324,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                 Mat mask = Mat.zeros(src.rows(), src.cols(), CvType.CV_8UC3);
 
-                Imgproc.fillPoly(mask, points, new Scalar(255, 255, 255));
+                Imgproc.fillPoly(mask, matOfPoints, new Scalar(255, 255, 255));
 
-//                Mat masked = new Mat(src.rows(), src.cols(), CvType.CV_8UC3);
-//                Core.bitwise_and(src, mask, masked);
+                Mat masked = new Mat(src.rows(), src.cols(), CvType.CV_8UC3);
+                Core.bitwise_and(src, mask, masked);
 //
                 Bitmap resultBitmap = Bitmap.createBitmap(mask.cols(), mask.rows(), Bitmap.Config.ARGB_8888);
 //                Utils.matToBitmap(masked, resultBitmap);
-                Utils.matToBitmap(mask, resultBitmap);
+                Utils.matToBitmap(masked, resultBitmap);
                 Log.d("rzc", "resultBitmap.getWidth = " + resultBitmap.getWidth() + ", resultBitmap.getHeight = " + resultBitmap.getHeight());
                 mTestImg.setVisibility(View.VISIBLE);
                 mTestImg.setImageBitmap(resultBitmap);
