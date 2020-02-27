@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
@@ -35,9 +36,11 @@ import org.opencv.android.Utils;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,7 +54,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
     private CropView mResourcePicture;
-    private ImageView mResultPicture;
+    private ImageView mResultPicture, mTestImg;
     private Button mSelect, mCut, mCutOut, mSaveCutOut;
     private String mCurrentPhotoPath;
     private Bitmap originalBitmap;
@@ -100,6 +103,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mCut = findViewById(R.id.cut_picture);
         mCutOut = findViewById(R.id.cutout_picture);
         mSaveCutOut = findViewById(R.id.save_cutout);
+        mTestImg = findViewById(R.id.test_img);
 
         mSelect.setOnClickListener(this);
         mCut.setOnClickListener(this);
@@ -234,26 +238,137 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     //从图库中选择图片
     public void setPic(){
         originalBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
+        Log.d("rzc", "originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
 //        mResourcePicture.setBmpPath(mCurrentPhotoPath);
 
-        onFaceDetect(mCurrentPhotoPath);
+        onFaceDetect(mCurrentPhotoPath, originalBitmap);
     }
 
-    private void onFaceDetect(String currentPhotoPath) {
-        List<VisionDetRet> detect = mFaceDet.detect(currentPhotoPath);
-        if (detect != null && detect.size() > 0) {
-            VisionDetRet detRet = detect.get(0);
+    private void onFaceDetect(String currentPhotoPath, Bitmap originalBitmap) {
+        List<VisionDetRet> faceList = mFaceDet.detect(currentPhotoPath);
+        if (faceList != null && faceList.size() > 0) {
+            VisionDetRet detRet = faceList.get(0);
             float confidence = detRet.getConfidence();
             int top = detRet.getTop();
             int left = detRet.getLeft();
             int bottom = detRet.getBottom();
             int right = detRet.getRight();
             ArrayList<Point> landmarks = detRet.getFaceLandmarks();
+
+
+            originalBitmap = scaleBitmap(originalBitmap, 0.3f);
+            Log.d("rzc", "new originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
+
+            long start = System.currentTimeMillis();
+            Bitmap bitmap = processMask(faceList, originalBitmap);
+            Log.d("rzc", "processMask time = " + (System.currentTimeMillis() - start));
+
+
             mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
         } else {
             Toast.makeText(this, "No Face !!", Toast.LENGTH_LONG).show();
             mResourcePicture.setBmpPath(mCurrentPhotoPath);
         }
+    }
+
+    private Bitmap processMask(List<VisionDetRet> faceList, Bitmap bitmap) {
+        if (faceList != null && faceList.size() > 0) {
+            //目前只检测一张脸
+            VisionDetRet detRet = faceList.get(0);
+            if (detRet != null) {
+                float confidence = detRet.getConfidence();
+                int left = detRet.getLeft();
+                int right = detRet.getRight();
+                int top = detRet.getTop();
+                int bottom = detRet.getBottom();
+
+                /**
+                 * 方案一
+                 */
+                ArrayList<Point> faceLandmarks = detRet.getFaceLandmarks();
+                ArrayList<MatOfPoint> points = new ArrayList<>();
+                for (int i = 0; i<17; i++) {
+                    Point p = faceLandmarks.get(i);
+                    org.opencv.core.Point point = new org.opencv.core.Point(p.x, p.y);
+                    MatOfPoint matOfPoint = new MatOfPoint(point);
+                    points.add(matOfPoint);
+                }
+
+                ArrayList<MatOfPoint> tempMatOfPoints = new ArrayList<>();
+                for (int i = 68;i<81;i++) {
+                    Point p = faceLandmarks.get(i);
+                    org.opencv.core.Point point = new org.opencv.core.Point(p.x, p.y);
+                    MatOfPoint matOfPoint = new MatOfPoint(point);
+                    tempMatOfPoints.add(matOfPoint);
+                }
+
+                ArrayList<MatOfPoint> matOfPoints2 = new ArrayList<>();
+                matOfPoints2.add(tempMatOfPoints.get(10));
+                matOfPoints2.add(tempMatOfPoints.get(6));
+                matOfPoints2.add(tempMatOfPoints.get(11));
+                matOfPoints2.add(tempMatOfPoints.get(5));
+                matOfPoints2.add(tempMatOfPoints.get(4));
+                matOfPoints2.add(tempMatOfPoints.get(12));
+                matOfPoints2.add(tempMatOfPoints.get(3));
+                matOfPoints2.add(tempMatOfPoints.get(2));
+                matOfPoints2.add(tempMatOfPoints.get(1));
+                matOfPoints2.add(tempMatOfPoints.get(0));
+                matOfPoints2.add(tempMatOfPoints.get(8));
+                matOfPoints2.add(tempMatOfPoints.get(7));
+                matOfPoints2.add(tempMatOfPoints.get(9));
+
+                points.addAll(matOfPoints2);
+
+
+                Mat src = new Mat();
+                Utils.bitmapToMat(bitmap, src);
+                //转成CV_8UC3格式
+                Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2RGB);
+
+                Mat mask = Mat.zeros(src.rows(), src.cols(), CvType.CV_8UC3);
+
+                Imgproc.fillPoly(mask, points, new Scalar(255, 255, 255));
+
+//                Mat masked = new Mat(src.rows(), src.cols(), CvType.CV_8UC3);
+//                Core.bitwise_and(src, mask, masked);
+//
+                Bitmap resultBitmap = Bitmap.createBitmap(mask.cols(), mask.rows(), Bitmap.Config.ARGB_8888);
+//                Utils.matToBitmap(masked, resultBitmap);
+                Utils.matToBitmap(mask, resultBitmap);
+                Log.d("rzc", "resultBitmap.getWidth = " + resultBitmap.getWidth() + ", resultBitmap.getHeight = " + resultBitmap.getHeight());
+                mTestImg.setVisibility(View.VISIBLE);
+                mTestImg.setImageBitmap(resultBitmap);
+                mResourcePicture.setVisibility(View.INVISIBLE);
+                mask.release();
+                return null;
+
+            }
+        }
+        return null;
+    }
+
+    // 等比缩放图片
+    /**
+     * 按比例缩放图片
+     *
+     * @param origin 原图
+     * @param ratio  比例
+     * @return 新的bitmap
+     */
+    private Bitmap scaleBitmap(Bitmap origin, float ratio) {
+        if (origin == null) {
+            return null;
+        }
+        int width = origin.getWidth();
+        int height = origin.getHeight();
+        Matrix matrix = new Matrix();
+        matrix.preScale(ratio, ratio);
+        Bitmap newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
+        if (newBM.equals(origin)) {
+            return newBM;
+        }
+        origin.recycle();
+        return newBM;
     }
 
     //选择剪切区域

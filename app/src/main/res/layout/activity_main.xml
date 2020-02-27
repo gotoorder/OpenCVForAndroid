@@ -6,11 +6,22 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:id="@+id/test_img"
+        android:layout_width="320dp"
+        android:layout_height="320dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="15dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+
     <com.raysee.opencv.CropView
         android:id="@+id/resource"
         android:layout_width="240dp"
         android:layout_height="320dp"
-        android:layout_marginLeft="15dp"
+        android:layout_marginStart="15dp"
         android:layout_marginTop="15dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
