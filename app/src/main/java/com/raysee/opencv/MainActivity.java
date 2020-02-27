@@ -2,7 +2,6 @@ package com.raysee.opencv;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RawRes;
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -41,7 +40,6 @@ import org.opencv.core.MatOfPoint;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.utils.Converters;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -197,7 +195,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            final Bitmap bitmap = cupBitmap(originalBitmap, (int) croppedBitmapData.left, (int) croppedBitmapData.top, croppedBitmapWidth, croppedBitmapHeight);
+                            final Bitmap bitmap = cutOutBitmap(originalBitmap, (int) croppedBitmapData.left, (int) croppedBitmapData.top, croppedBitmapWidth, croppedBitmapHeight);
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
@@ -234,7 +232,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
      * @param height
      * @return
      */
-    private Bitmap cupBitmap(Bitmap bitmap,int x,int y,int width,int height){
+    private Bitmap cutOutBitmap(Bitmap bitmap, int x, int y, int width, int height){
         Mat img = new Mat();
         //缩小图片尺寸
         // Bitmap bm = Bitmap.createScaledBitmap(bitmap,bitmap.getWidth(),bitmap.getHeight(),true);
@@ -305,11 +303,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             //目前只检测一张脸
             VisionDetRet detRet = faceList.get(0);
             if (detRet != null) {
-
-                /**
-                 * 方案一
-                 */
+                float confidence = detRet.getConfidence();
+                String label = detRet.getLabel();
+                int left = detRet.getLeft();
+                int right = detRet.getRight();
+                int top = detRet.getTop();
+                int bottom = detRet.getBottom();
                 ArrayList<Point> faceLandmarks = detRet.getFaceLandmarks();
+                Log.d(TAG, "onPostExecute confidence = " + confidence + ", label = "
+                        + label + ", left = " + left + ", right =" + right + ", top = "
+                        + top + ", bottom =  " + bottom + ", faceLandmarks = " + faceLandmarks.toString()
+                        + ", faceLandmarks.size = " + faceLandmarks.size());
+
                 ArrayList<MatOfPoint> matOfPoints = new ArrayList<>();
                 ArrayList<org.opencv.core.Point> points = new ArrayList<>();
                 for (int i = 0; i<17; i++) {
