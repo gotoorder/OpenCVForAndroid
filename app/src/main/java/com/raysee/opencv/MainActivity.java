@@ -23,6 +23,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.raysee.dlib.dlib.Constants;
@@ -48,14 +49,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MainActivity.rzc";
     private CropView mResourcePicture;
     private ImageView mResultPicture, mTestImg;
     private Button mSelect, mCut, mCutOut, mSaveCutOut;
+    private TextView mScore;
     private String mCurrentPhotoPath;
     private Bitmap originalBitmap;
     private static final int REQUEST_OPEN_IMAGE = 1;
@@ -65,35 +69,58 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private FaceDet mFaceDet;
 
-//    static {
-//        try{
-//            //To do - add your static code
-//            System.loadLibrary("opencv_java4");
-//        }
-//        catch(UnsatisfiedLinkError e) {
-//            Log.v(TAG, "Native code library failed to load. " + e);
-//        }
-//        catch(Exception e) {
-//            Log.v(TAG, "Exception: " + e);
-//        }
-//    }
+    private Executor executor = Executors.newSingleThreadExecutor();
+    private Classifier classifier;
+
+    private static final String MODEL_FILE = "file:///android_asset/moilenetv2.pb";
+    private static final String LABEL_FILE = "file:///android_asset/graph_label_strings.txt";
+
+    private static final int INPUT_SIZE = 224;
+    private static final int IMAGE_MEAN = 117;
+    private static final float IMAGE_STD = 1;
+    private static final String INPUT_NAME = "input.1";
+    private static final String OUTPUT_NAME = "add_10";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        initTensorFlowAndLoadModel();
+
         initViews();
         if (mFaceDet == null) {
             final String targetPath = Constants.getFaceShapeModelPath();
             if (!new File(targetPath).exists()) {
-                Log.d("rzc", "targetPath not exist");
+                Log.d(TAG, "targetPath not exist");
                 copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_81_face_landmarks, targetPath);
             } else {
-                Log.d("rzc", targetPath + " exist.");
+                Log.d(TAG, targetPath + " exist.");
             }
             mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
         }
+    }
+
+    private void initTensorFlowAndLoadModel() {
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    classifier = TensorFlowClassifier.create(
+                            getApplicationContext().getAssets(),
+                            MODEL_FILE,
+                            LABEL_FILE,
+                            INPUT_SIZE,
+                            IMAGE_MEAN,
+                            IMAGE_STD,
+                            INPUT_NAME,
+                            OUTPUT_NAME);
+                } catch (final Exception e) {
+                    throw new RuntimeException("Error initializing TensorFlow!", e);
+                }
+            }
+        });
     }
 
     private void initViews() {
@@ -104,6 +131,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mCutOut = findViewById(R.id.cutout_picture);
         mSaveCutOut = findViewById(R.id.save_cutout);
         mTestImg = findViewById(R.id.test_img);
+        mScore = findViewById(R.id.score);
 
         mSelect.setOnClickListener(this);
         mCut.setOnClickListener(this);
@@ -238,7 +266,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     //从图库中选择图片
     public void setPic(){
         originalBitmap = BitmapFactory.decodeFile(mCurrentPhotoPath);
-        Log.d("rzc", "originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
+        Log.d(TAG, "originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
 //        mResourcePicture.setBmpPath(mCurrentPhotoPath);
 
         onFaceDetect(mCurrentPhotoPath, originalBitmap);
@@ -247,7 +275,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private void onFaceDetect(String currentPhotoPath, Bitmap originalBitmap) {
         //对图片进行缩放处理
         originalBitmap = scaleBitmap(originalBitmap, 0.3f);
-        Log.d("rzc", "new originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
+        Log.d(TAG, "new originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
 
         List<VisionDetRet> faceList = mFaceDet.detect(originalBitmap);
         if (faceList != null && faceList.size() > 0) {
@@ -261,8 +289,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
             long start = System.currentTimeMillis();
             Bitmap bitmap = processMask(faceList, originalBitmap);
-            Log.d("rzc", "processMask time = " + (System.currentTimeMillis() - start));
+            Log.d(TAG, "processMask time = " + (System.currentTimeMillis() - start));
 
+            processTensorFlow(bitmap);
 
             mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
         } else {
@@ -313,6 +342,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                 points.addAll(points2);
 
+                //矩阵，二维数组。MatOfPoint继承自Mat，此时matOfPoints列表里只有一张轮廓数组。
                 MatOfPoint matOfPoint = new MatOfPoint();
                 matOfPoint.fromList(points);
                 matOfPoints.add(matOfPoint);
@@ -328,20 +358,40 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                 Mat masked = new Mat(src.rows(), src.cols(), CvType.CV_8UC3);
                 Core.bitwise_and(src, mask, masked);
-//
+
                 Bitmap resultBitmap = Bitmap.createBitmap(mask.cols(), mask.rows(), Bitmap.Config.ARGB_8888);
-//                Utils.matToBitmap(masked, resultBitmap);
                 Utils.matToBitmap(masked, resultBitmap);
-                Log.d("rzc", "resultBitmap.getWidth = " + resultBitmap.getWidth() + ", resultBitmap.getHeight = " + resultBitmap.getHeight());
+                Log.d(TAG, "resultBitmap.getWidth = " + resultBitmap.getWidth() + ", resultBitmap.getHeight = " + resultBitmap.getHeight());
                 mTestImg.setVisibility(View.VISIBLE);
                 mTestImg.setImageBitmap(resultBitmap);
                 mResourcePicture.setVisibility(View.INVISIBLE);
+                src.release();
                 mask.release();
-                return null;
+                masked.release();
+                return resultBitmap;
 
             }
         }
         return null;
+    }
+
+    private void processTensorFlow(Bitmap bitmap) {
+
+        long createScaledBitmapStart = System.currentTimeMillis();
+        bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
+        long createScaledBitmapEnd = System.currentTimeMillis();
+        Log.d(TAG, "processTensorFlow create scaled bitmap time = " + (createScaledBitmapEnd - createScaledBitmapStart));
+
+        final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
+
+        Log.d(TAG, "processTensorFlow recognize time = " + (System.currentTimeMillis() - createScaledBitmapEnd) );
+        if (results == null) {
+            return;
+        }
+        String result = results.toString();
+        Log.d(TAG, "processTensorFlow result = " + result);
+
+        mScore.setText(result);
     }
 
     // 等比缩放图片

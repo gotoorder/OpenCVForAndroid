@@ -50,6 +50,7 @@ dependencies {
     implementation project(path: ':opencv')
     implementation project(path: ':dlib')
 //    implementation fileTree(dir:"$buildDir/native-libs", include: 'native-libs.jar' )
+    implementation 'org.tensorflow:tensorflow-android:1.13.1'
 }
 
 
