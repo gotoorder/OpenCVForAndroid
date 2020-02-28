@@ -5,6 +5,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
@@ -471,7 +472,7 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
                             },
                             this,
                             R.layout.tfe_ic_camera_connection_fragment,
-                            new Size(640, 480)
+                            new Size(previewWidth, previewHeight)
                             );
 
             camera2Fragment.setCamera(cameraId);
@@ -479,7 +480,7 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
         } else {
             fragment =
                     new LegacyCameraConnectionFragment(this, R.layout.tfe_ic_camera_connection_fragment,
-                            new Size(640, 480));
+                            new Size(previewWidth, previewHeight));
         }
 
         getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
@@ -637,9 +638,34 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
         if (v.getId() == R.id.take_photo) {
             rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
             rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-            String s = saveImageToGalleryString(this, rgbFrameBitmap);
+            Bitmap bitmap = rotateBitmap(rgbFrameBitmap, 90);
+            String s = saveImageToGalleryString(this, bitmap);
             Toast.makeText(this, "照片已保存在--->"+s, Toast.LENGTH_LONG).show();
         }
+    }
+
+    /**
+     * 选择变换
+     *
+     * @param origin 原图
+     * @param alpha  旋转角度，可正可负
+     * @return 旋转后的图片
+     */
+    private Bitmap rotateBitmap(Bitmap origin, float alpha) {
+        if (origin == null) {
+            return null;
+        }
+        int width = origin.getWidth();
+        int height = origin.getHeight();
+        Matrix matrix = new Matrix();
+        matrix.setRotate(alpha);
+        // 围绕原地进行旋转
+        Bitmap newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
+        if (newBM.equals(origin)) {
+            return newBM;
+        }
+        origin.recycle();
+        return newBM;
     }
 
     @Override
