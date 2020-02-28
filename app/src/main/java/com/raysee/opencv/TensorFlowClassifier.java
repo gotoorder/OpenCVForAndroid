@@ -126,7 +126,7 @@ public class TensorFlowClassifier implements Classifier {
         // Copy the input data into TensorFlow.
         TraceCompat.beginSection("feed");
         inferenceInterface.feed(
-                inputName, floatValues, new long[]{1, 3, inputSize, inputSize});
+                inputName, floatValues, 1, 3, inputSize, inputSize);
         TraceCompat.endSection();
 
         // Run the inference call.

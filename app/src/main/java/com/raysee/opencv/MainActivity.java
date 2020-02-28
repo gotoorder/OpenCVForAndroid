@@ -56,7 +56,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private static final String TAG = "MainActivity.rzc";
     private CropView mResourcePicture;
     private ImageView mResultPicture, mTestImg;
-    private Button mSelect, mCut, mCutOut, mSaveCutOut;
+    private Button mSelect, mCut, mCutOut, mSaveCutOut, mCamera;
     private TextView mScore;
     private String mCurrentPhotoPath;
     private Bitmap originalBitmap;
@@ -130,11 +130,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mSaveCutOut = findViewById(R.id.save_cutout);
         mTestImg = findViewById(R.id.test_img);
         mScore = findViewById(R.id.score);
+        mCamera = findViewById(R.id.camera);
 
         mSelect.setOnClickListener(this);
         mCut.setOnClickListener(this);
         mCutOut.setOnClickListener(this);
         mSaveCutOut.setOnClickListener(this);
+        mCamera.setOnClickListener(this);
 
         dlg = new ProgressDialog(this);
     }
@@ -216,6 +218,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 }else {
                     Toast.makeText(this, "请先扣图", Toast.LENGTH_SHORT).show();
                 }
+                break;
+            case R.id.camera:
+                startActivity(new Intent(this, CameraActivity.class));
                 break;
             default:
                 break;
@@ -474,7 +479,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     //保存在系统图库
     public static String saveImageToGalleryString(Context context, Bitmap bmp) {
         // 首先保存图片
-        String storePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "dearxy";
+        String storePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "raysees";
         File appDir = new File(storePath);
         if (!appDir.exists()) {
             appDir.mkdir();
@@ -484,7 +489,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         try {
             FileOutputStream fos = new FileOutputStream(file);
             //通过io流的方式来压缩保存图片
-            bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
             fos.flush();
             fos.close();
 
