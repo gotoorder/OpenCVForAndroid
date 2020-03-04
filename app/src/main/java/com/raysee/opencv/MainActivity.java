@@ -16,6 +16,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,6 +29,7 @@ import android.widget.Toast;
 import com.raysee.dlib.dlib.Constants;
 import com.raysee.dlib.dlib.FaceDet;
 import com.raysee.dlib.dlib.VisionDetRet;
+import com.raysee.opencv.tensorflow_lite.TFLiteImageClassifier;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -73,6 +75,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private static final String MODEL_FILE = "file:///android_asset/moilenetv2.pb";
     private static final String LABEL_FILE = "file:///android_asset/graph_label_strings.txt";
 
+    private static final String LITE_MODEL_FILE = "moilenetv2.tflite";
+    private static final String LITE_LABEL_FILE = "graph_label_strings.txt";
+
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
     private static final float IMAGE_STD = 1;
@@ -85,7 +90,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initTensorFlowAndLoadModel();
+//        initTensorFlowAndLoadModel();
+        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
 
         initViews();
         if (mFaceDet == null) {
@@ -294,7 +300,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             Bitmap bitmap = processMask(faceList, originalBitmap);
             Log.d(TAG, "processMask time = " + (System.currentTimeMillis() - start));
 
-            processTensorFlow(bitmap);
+//            processTensorFlow(bitmap);
+            processTensorflowLite(bitmap);
 
             mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
         } else {
@@ -402,6 +409,32 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         Log.d(TAG, "processTensorFlow result = " + result);
 
         mScore.setText(result);
+    }
+
+    private void processTensorflowLite(Bitmap bitmap) {
+        final long startTime = SystemClock.uptimeMillis();
+        final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
+        Log.d(TAG, "processTensorflowLite time = " + (SystemClock.uptimeMillis() - startTime));
+
+//        lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+//        if (resultsView == null) {
+//            resultsView = (ResultsView) findViewById(R.id.results);
+//        }
+//        resultsView.setResults(results);
+//        requestRender();
+//        readyForNextImage();
+
+        Log.d(TAG, "Detect:  " + results.toString());
+        mScore.setText(results.toString());
+
+        runOnUiThread(
+                new Runnable() {
+                    @Override
+                    public void run() {
+
+                    }
+                });
     }
 
     // 等比缩放图片
