@@ -5,8 +5,9 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Paint;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -18,27 +19,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Trace;
 import android.util.Log;
 import android.util.Size;
-import android.view.Surface;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
-import androidx.annotation.UiThread;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import static com.raysee.opencv.MainActivity.saveImageToGalleryString;
 
@@ -638,9 +630,9 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
         if (v.getId() == R.id.take_photo) {
             rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
             rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-            Bitmap bitmap = rotateBitmap(rgbFrameBitmap, 90);
-            String s = saveImageToGalleryString(this, bitmap);
-            Toast.makeText(this, "照片已保存在--->"+s, Toast.LENGTH_LONG).show();
+            Bitmap bitmap = rotate(rgbFrameBitmap, 90);
+            String path = saveImageToGalleryString(this, bitmap);
+            Toast.makeText(this, "照片已保存在--->"+path, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -648,17 +640,16 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
      * 选择变换
      *
      * @param origin 原图
-     * @param alpha  旋转角度，可正可负
      * @return 旋转后的图片
      */
-    private Bitmap rotateBitmap(Bitmap origin, float alpha) {
+    private Bitmap rotateBitmap(Bitmap origin) {
         if (origin == null) {
             return null;
         }
         int width = origin.getWidth();
         int height = origin.getHeight();
         Matrix matrix = new Matrix();
-        matrix.setRotate(alpha);
+        matrix.setRotate((float) 90);
         // 围绕原地进行旋转
         Bitmap newBM = Bitmap.createBitmap(origin, 0, 0, width, height, matrix, false);
         if (newBM.equals(origin)) {
@@ -666,6 +657,36 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
         }
         origin.recycle();
         return newBM;
+    }
+
+    Bitmap rotate(Bitmap bm, final int orientationDegree) {
+
+        Matrix m = new Matrix();
+        m.setRotate(orientationDegree, (float) bm.getWidth() / 2, (float) bm.getHeight() / 2);
+        float targetX, targetY;
+        if (orientationDegree == 90) {
+            targetX = bm.getHeight();
+            targetY = 0;
+        } else {
+            targetX = bm.getHeight();
+            targetY = bm.getWidth();
+        }
+
+        final float[] values = new float[9];
+        m.getValues(values);
+
+        float x1 = values[Matrix.MTRANS_X];
+        float y1 = values[Matrix.MTRANS_Y];
+
+        m.postTranslate(targetX - x1, targetY - y1);
+
+        Bitmap bm1 = Bitmap.createBitmap(bm.getHeight(), bm.getWidth(), Bitmap.Config.ARGB_8888);
+
+        Paint paint = new Paint();
+        Canvas canvas = new Canvas(bm1);
+        canvas.drawBitmap(bm, m, paint);
+
+        return bm1;
     }
 
     @Override
