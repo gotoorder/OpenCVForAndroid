@@ -92,8 +92,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-//        initTensorFlowAndLoadModel();
-        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
+        initTensorFlowAndLoadModel();
+        //TODO lite
+//        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
 
         initViews();
         if (mFaceDet == null) {
@@ -302,8 +303,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             Bitmap bitmap = processMask(faceList, originalBitmap);
             Log.d(TAG, "processMask time = " + (System.currentTimeMillis() - start));
 
-//            processTensorFlow(bitmap);
-            processTensorflowLite(bitmap);
+            processTensorFlow(bitmap);
+            //TODO
+//            processTensorflowLite(bitmap);
 
             mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
         } else {
@@ -541,7 +543,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return null;
     }
 
-    public void copyFileFromRawToOthers(@NonNull final Context context, @RawRes int id, @NonNull final String targetPath) {
+    public static void copyFileFromRawToOthers(@NonNull final Context context, @RawRes int id, @NonNull final String targetPath) {
         InputStream in = context.getResources().openRawResource(id);
         FileOutputStream out = null;
         try {

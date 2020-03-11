@@ -54,5 +54,11 @@
         android:layout_marginBottom="25dp"
         />
 
+    <ImageView
+        android:id="@+id/test_result_mat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:contentDescription="mat" />
+
 </RelativeLayout>
 

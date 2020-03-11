@@ -27,9 +27,6 @@ import androidx.annotation.WorkerThread;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by Tzutalin on 2015/10/20.
- */
 public class PedestrianDet {
 
     // accessed by native methods

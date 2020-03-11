@@ -8,13 +8,11 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import org.opencv.core.Mat;
+
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by houzhi on 16-10-20.
- * Modified by tzutalin on 16-11-15
- */
 public class FaceDet {
     private static final String TAG = "dlib";
 
@@ -60,6 +58,14 @@ public class FaceDet {
         return Arrays.asList(detRets);
     }
 
+    public List<VisionDetRet> detect(@NonNull byte[] yuv, int height, int width, long matNativeObj) {
+        long begin = System.currentTimeMillis();
+        VisionDetRet[] detRets = jniYuvToMatDetect(yuv, height, width, matNativeObj);
+        long end = System.currentTimeMillis();
+        Log.d("rzc", "[Face detect] time: " + (end - begin));
+        return Arrays.asList(detRets);
+    }
+
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -81,6 +87,8 @@ public class FaceDet {
 
     @Keep
     private synchronized native VisionDetRet[] jniBitmapDetect(Bitmap bitmap);
+
+    private synchronized native VisionDetRet[] jniYuvToMatDetect(byte[] yuv, int height, int width, long matNativeObj);
 
     @Keep
     private synchronized native VisionDetRet[] jniDetect(String path);

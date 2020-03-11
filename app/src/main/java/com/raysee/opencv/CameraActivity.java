@@ -8,6 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -25,13 +26,29 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
-import java.nio.ByteBuffer;
+import com.raysee.dlib.dlib.Constants;
+import com.raysee.dlib.dlib.FaceDet;
+import com.raysee.dlib.dlib.VisionDetRet;
 
+import org.opencv.android.Utils;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.Scalar;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.File;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.raysee.opencv.MainActivity.copyFileFromRawToOthers;
 import static com.raysee.opencv.MainActivity.saveImageToGalleryString;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -53,31 +70,11 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
     private int yRowStride;
     private Runnable postInferenceCallback;
     private Runnable imageConverter;
-//    private LinearLayout bottomSheetLayout;
-//    private LinearLayout gestureLayout;
-//    private BottomSheetBehavior<LinearLayout> sheetBehavior;
-    protected TextView recognitionTextView,
-            recognition1TextView,
-            recognition2TextView,
-            recognitionValueTextView,
-            recognition1ValueTextView,
-            recognition2ValueTextView;
-    protected TextView frameValueTextView,
-            cropValueTextView,
-            cameraResolutionTextView,
-            rotationTextView,
-            inferenceTimeTextView;
-//    protected ImageView bottomSheetArrowImageView;
-//    private ImageView plusImageView, minusImageView;
-//    private Spinner modelSpinner;
-//    private Spinner deviceSpinner;
-//    private TextView threadsTextView;
-
-//    private Model model = Model.QUANTIZED;
-//    private Device device = Device.CPU;
-    private int numThreads = -1;
     private Bitmap rgbFrameBitmap = null;
     private Button mTakePhoto;
+    private FaceDet mFaceDet;
+    private static final String TAG = "CameraActivity.rzc";
+    private ImageView mTestResultMat;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -93,102 +90,22 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
             requestPermission();
         }
 
+        mTestResultMat = findViewById(R.id.test_result_mat);
+
         mTakePhoto = findViewById(R.id.take_photo);
         mTakePhoto.setOnClickListener(this);
 
-//        threadsTextView = findViewById(R.id.threads);
-//        plusImageView = findViewById(R.id.plus);
-//        minusImageView = findViewById(R.id.minus);
-//        modelSpinner = findViewById(R.id.model_spinner);
-//        deviceSpinner = findViewById(R.id.device_spinner);
-////        bottomSheetLayout = findViewById(R.id.bottom_sheet_layout);
-//        gestureLayout = findViewById(R.id.gesture_layout);
-////        sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
-//        bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
-
-//        ViewTreeObserver vto = gestureLayout.getViewTreeObserver();
-//        vto.addOnGlobalLayoutListener(
-//                new ViewTreeObserver.OnGlobalLayoutListener() {
-//                    @Override
-//                    public void onGlobalLayout() {
-//                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-//                            gestureLayout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-//                        } else {
-//                            gestureLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-//                        }
-//                        //                int width = bottomSheetLayout.getMeasuredWidth();
-//                        int height = gestureLayout.getMeasuredHeight();
-//
-////                        sheetBehavior.setPeekHeight(height);
-//                    }
-//                });
-//        sheetBehavior.setHideable(false);
-
-//        sheetBehavior.setBottomSheetCallback(
-//                new BottomSheetBehavior.BottomSheetCallback() {
-//                    @Override
-//                    public void onStateChanged(@NonNull View bottomSheet, int newState) {
-//                        switch (newState) {
-//                            case BottomSheetBehavior.STATE_HIDDEN:
-//                                break;
-//                            case BottomSheetBehavior.STATE_EXPANDED:
-//                            {
-//                                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_down);
-//                            }
-//                            break;
-//                            case BottomSheetBehavior.STATE_COLLAPSED:
-//                            {
-//                                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
-//                            }
-//                            break;
-//                            case BottomSheetBehavior.STATE_DRAGGING:
-//                                break;
-//                            case BottomSheetBehavior.STATE_SETTLING:
-//                                bottomSheetArrowImageView.setImageResource(R.drawable.icn_chevron_up);
-//                                break;
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
-//                });
-
-//        recognitionTextView = findViewById(R.id.detected_item);
-//        recognitionValueTextView = findViewById(R.id.detected_item_value);
-//        recognition1TextView = findViewById(R.id.detected_item1);
-//        recognition1ValueTextView = findViewById(R.id.detected_item1_value);
-//        recognition2TextView = findViewById(R.id.detected_item2);
-//        recognition2ValueTextView = findViewById(R.id.detected_item2_value);
-//
-//        frameValueTextView = findViewById(R.id.frame_info);
-//        cropValueTextView = findViewById(R.id.crop_info);
-//        cameraResolutionTextView = findViewById(R.id.view_info);
-//        rotationTextView = findViewById(R.id.rotation_info);
-//        inferenceTimeTextView = findViewById(R.id.inference_info);
-
-//        modelSpinner.setOnItemSelectedListener(this);
-//        deviceSpinner.setOnItemSelectedListener(this);
-//
-//        plusImageView.setOnClickListener(this);
-//        minusImageView.setOnClickListener(this);
-//
-//        model = Model.valueOf(modelSpinner.getSelectedItem().toString().toUpperCase());
-//        device = Device.valueOf(deviceSpinner.getSelectedItem().toString());
-//        numThreads = Integer.parseInt(threadsTextView.getText().toString().trim());
+        if (mFaceDet == null) {
+            final String targetPath = Constants.getFaceShapeModelPath();
+            if (!new File(targetPath).exists()) {
+                Log.d(TAG, "targetPath not exist");
+                copyFileFromRawToOthers(getApplicationContext(), R.raw.shape_predictor_81_face_landmarks, targetPath);
+            } else {
+                Log.d(TAG, targetPath + " exist.");
+            }
+            mFaceDet = new FaceDet(Constants.getFaceShapeModelPath());
+        }
     }
-
-//    protected int[] getRgbBytes() {
-//        imageConverter.run();
-//        return rgbBytes;
-//    }
-//
-//    protected int getLuminanceStride() {
-//        return yRowStride;
-//    }
-//
-//    protected byte[] getLuminance() {
-//        return yuvBytes[0];
-//    }
 
     /** Callback for android.hardware.Camera API */
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -216,6 +133,7 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
 
         isProcessingFrame = true;
         yuvBytes[0] = bytes;
+        Log.d(TAG, "onPreviewFrame yuv length" + bytes.length);
         yRowStride = previewWidth;
 
         imageConverter =
@@ -263,6 +181,7 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
             isProcessingFrame = true;
 //            Trace.beginSection("imageAvailable");
             final Image.Plane[] planes = image.getPlanes();
+            Log.d(TAG, "onImageAvailable planes length" + planes.length);
             fillBytes(planes, yuvBytes);
             yRowStride = planes[0].getRowStride();
             final int uvRowStride = planes[1].getRowStride();
@@ -346,6 +265,9 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
     public synchronized void onDestroy() {
         LOGGER.d("onDestroy " + this);
         super.onDestroy();
+        if (mFaceDet != null) {
+            mFaceDet.release();
+        }
     }
 
     protected synchronized void runInBackground(final Runnable r) {
@@ -487,6 +409,7 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
                 LOGGER.d("Initializing buffer %d at size %d", i, buffer.capacity());
                 yuvBytes[i] = new byte[buffer.capacity()];
             }
+            Log.d(TAG, "fillBytes yuvBytes[i] length" + yuvBytes[i].length);
             buffer.get(yuvBytes[i]);
         }
     }
@@ -628,11 +551,56 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
 //        }
 
         if (v.getId() == R.id.take_photo) {
-            rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-            rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-            Bitmap bitmap = rotate(rgbFrameBitmap, 90);
-            String path = saveImageToGalleryString(this, bitmap);
-            Toast.makeText(this, "照片已保存在--->"+path, Toast.LENGTH_LONG).show();
+            //测试YUV直接送入dlib检测
+            if (yuvBytes == null) {
+                return;
+            }
+            byte[] yuvByte = yuvBytes[0];
+            if (yuvByte == null) {
+                return;
+            }
+            Log.d(TAG, "onClick yuv length" + yuvByte.length);
+
+//            Mat mat = new Mat(previewWidth*3/2,previewHeight, CvType.CV_8UC1);
+//            mat.put(0,0,yuvByte);
+//            Mat bgr_i420 = new Mat();
+//            Imgproc.cvtColor(mat , bgr_i420, Imgproc.COLOR_YUV2BGR_NV21);//COLOR_YUV2BGR_I420
+
+            Mat mat = new Mat();
+            Log.d(TAG, "mat channels = " + mat.channels());
+
+            List<VisionDetRet> faceList = mFaceDet.detect(yuvByte, previewHeight,previewWidth, mat.getNativeObjAddr());
+            if (faceList != null && faceList.size() > 0) {
+                for (VisionDetRet detRet : faceList) {
+                    float confidence = detRet.getConfidence();
+                    String label = detRet.getLabel();
+                    int left = detRet.getLeft();
+                    int right = detRet.getRight();
+                    int top = detRet.getTop();
+                    int bottom = detRet.getBottom();
+                    ArrayList<Point> faceLandmarks = detRet.getFaceLandmarks();
+                    Log.d(TAG, "onPostExecute confidence = " + confidence + ", label = "
+                            + label + ", left = " + left + ", right =" + right + ", top = "
+                            + top + ", bottom =  " + bottom + ", faceLandmarks = " + faceLandmarks.toString()
+                            + ", faceLandmarks.size = " + faceLandmarks.size());
+                }
+
+            } else {
+                Log.d(TAG, faceList == null? "faceList == null" : "faceList size = 0");
+            }
+            Log.d(TAG, "new mat type = " + mat.type() + ", new mat channels : " + mat.channels());
+            Bitmap resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mat, resultBitmap);
+            mTestResultMat.setImageBitmap(resultBitmap);
+            mat.release();
+
+
+
+//            rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+//            rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
+//            Bitmap bitmap = rotate(rgbFrameBitmap, 90);
+//            String path = saveImageToGalleryString(this, bitmap);
+//            Toast.makeText(this, "照片已保存在--->"+path, Toast.LENGTH_LONG).show();
         }
     }
 
