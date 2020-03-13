@@ -561,15 +561,32 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
             }
             Log.d(TAG, "onClick yuv length" + yuvByte.length);
 
-//            Mat mat = new Mat(previewWidth*3/2,previewHeight, CvType.CV_8UC1);
-//            mat.put(0,0,yuvByte);
-//            Mat bgr_i420 = new Mat();
-//            Imgproc.cvtColor(mat , bgr_i420, Imgproc.COLOR_YUV2BGR_NV21);//COLOR_YUV2BGR_I420
+            /**
+             * 保存图片
+             */
+//            rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+//            rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
+//            Bitmap bitmap = rotate(rgbFrameBitmap, 90);
+//            String path = saveImageToGalleryString(this, bitmap);
+//            Toast.makeText(this, "照片已保存在--->"+path, Toast.LENGTH_LONG).show();
 
-            Mat mat = new Mat();
-            Log.d(TAG, "mat channels = " + mat.channels());
+            /**
+             * 传入bitmap进行检测的方案
+             */
+            rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+            rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
+            Bitmap bitmap = rotate(rgbFrameBitmap, 90);
+            List<VisionDetRet> faceList = mFaceDet.gRayDetect(bitmap);
 
-            List<VisionDetRet> faceList = mFaceDet.detect(yuvByte, previewHeight,previewWidth, mat.getNativeObjAddr());
+
+            /**
+             * 通过底层转换yuv的方案
+             */
+//            Mat mat = new Mat();
+//            Log.d(TAG, "mat channels = " + mat.channels());
+//            List<VisionDetRet> faceList = mFaceDet.detect(yuvByte, previewHeight,previewWidth, mat.getNativeObjAddr());
+
+
             if (faceList != null && faceList.size() > 0) {
                 for (VisionDetRet detRet : faceList) {
                     float confidence = detRet.getConfidence();
@@ -588,19 +605,15 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
             } else {
                 Log.d(TAG, faceList == null? "faceList == null" : "faceList size = 0");
             }
-            Log.d(TAG, "new mat type = " + mat.type() + ", new mat channels : " + mat.channels());
-            Bitmap resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(mat, resultBitmap);
-            mTestResultMat.setImageBitmap(resultBitmap);
-            mat.release();
+            /**
+             * 通过底层转换yuv的方案
+             */
+//            Log.d(TAG, "new mat type = " + mat.type() + ", new mat channels : " + mat.channels());
+//            Bitmap resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888);
+//            Utils.matToBitmap(mat, resultBitmap);
+//            mTestResultMat.setImageBitmap(resultBitmap);
+//            mat.release();
 
-
-
-//            rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
-//            rgbFrameBitmap.setPixels(rgbBytes, 0, previewWidth, 0, 0, previewWidth, previewHeight);
-//            Bitmap bitmap = rotate(rgbFrameBitmap, 90);
-//            String path = saveImageToGalleryString(this, bitmap);
-//            Toast.makeText(this, "照片已保存在--->"+path, Toast.LENGTH_LONG).show();
         }
     }
 

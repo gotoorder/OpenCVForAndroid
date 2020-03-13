@@ -58,6 +58,11 @@ public class FaceDet {
         return Arrays.asList(detRets);
     }
 
+    public List<VisionDetRet> gRayDetect(@NonNull Bitmap bitmap) {
+        VisionDetRet[] detRets = jniBitmapToGRayDetect(bitmap);
+        return Arrays.asList(detRets);
+    }
+
     public List<VisionDetRet> detect(@NonNull byte[] yuv, int height, int width, long matNativeObj) {
         long begin = System.currentTimeMillis();
         VisionDetRet[] detRets = jniYuvToMatDetect(yuv, height, width, matNativeObj);
@@ -87,6 +92,8 @@ public class FaceDet {
 
     @Keep
     private synchronized native VisionDetRet[] jniBitmapDetect(Bitmap bitmap);
+
+    private synchronized native VisionDetRet[] jniBitmapToGRayDetect(Bitmap bitmap);
 
     private synchronized native VisionDetRet[] jniYuvToMatDetect(byte[] yuv, int height, int width, long matNativeObj);
 
