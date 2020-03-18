@@ -288,8 +288,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         //对图片进行缩放处理
         originalBitmap = scaleBitmap(originalBitmap, 0.3f);
         Log.d(TAG, "new originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
-
+        long detectStart = System.currentTimeMillis();
         List<VisionDetRet> faceList = mFaceDet.detect(originalBitmap);
+        Log.d(TAG, " face det time = " + (System.currentTimeMillis() - detectStart));
         if (faceList != null && faceList.size() > 0) {
             VisionDetRet detRet = faceList.get(0);
             float confidence = detRet.getConfidence();
