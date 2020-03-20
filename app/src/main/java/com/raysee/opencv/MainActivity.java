@@ -78,7 +78,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private static final String LABEL_FILE = "file:///android_asset/graph_label_strings.txt";
 
     private static final String LITE_MODEL_FILE = "moilenetv2.tflite";
-    private static final String LITE_LABEL_FILE = "graph_label_strings.txt";
+    private static final String LITE_LABEL_FILE = "label.txt";
 
     private static final int INPUT_SIZE = 224;
     private static final int IMAGE_MEAN = 117;
@@ -92,9 +92,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initTensorFlowAndLoadModel();
-        //TODO lite
-//        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
+//        initTensorFlowAndLoadModel();
+
+        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
 
         initViews();
         if (mFaceDet == null) {
@@ -304,8 +304,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             Bitmap bitmap = processMask(faceList, originalBitmap);
             Log.d(TAG, "processMask time = " + (System.currentTimeMillis() - start));
 
-            processTensorFlow(bitmap);
-            //TODO
+//            processTensorFlow(bitmap);
+
 //            processTensorflowLite(bitmap);
 
             mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
@@ -371,14 +371,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                 Mat src = new Mat();
                 Utils.bitmapToMat(bitmap, src);
+
+                Rect rect = new Rect(left, top, right - left, bottom - top);
+                src =new Mat(src,rect);
+
+
                 //转成CV_8UC3格式
                 Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2RGB);
 
-                Mat mask = Mat.zeros(src.rows(), src.cols(), CvType.CV_8UC3);
+                Mat mask = Mat.zeros(INPUT_SIZE, INPUT_SIZE, CvType.CV_8UC3);
 
                 Imgproc.fillPoly(mask, matOfPoints, new Scalar(255, 255, 255));
 
-                Mat masked = new Mat(src.rows(), src.cols(), CvType.CV_8UC3);
+                Mat masked = new Mat(INPUT_SIZE, INPUT_SIZE, CvType.CV_8UC3);
                 Core.bitwise_and(src, mask, masked);
 
                 Bitmap resultBitmap = Bitmap.createBitmap(mask.cols(), mask.rows(), Bitmap.Config.ARGB_8888);

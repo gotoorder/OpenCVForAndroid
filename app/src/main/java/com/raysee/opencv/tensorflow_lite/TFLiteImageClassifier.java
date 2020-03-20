@@ -15,6 +15,7 @@ limitations under the License.
 
 package com.raysee.opencv.tensorflow_lite;
 
+import android.annotation.SuppressLint;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
@@ -42,7 +43,7 @@ import java.util.Vector;
 
 /** A classifier specialized to label images using TensorFlow. */
 public class TFLiteImageClassifier implements Classifier {
-  private static final String TAG = "TFLiteImageClassifier";
+  private static final String TAG = "TFLiteImageClassifier.rzc";
 
   // Only return this many results with at least this confidence.
   private static final int MAX_RESULTS = 3;
@@ -128,11 +129,13 @@ public class TFLiteImageClassifier implements Classifier {
   }
 
   /** Writes Image data into a {@code ByteBuffer}. */
+  @SuppressLint("LongLogTag")
   private void convertBitmapToByteBuffer(Bitmap bitmap) {
     if (imgData == null) {
       return;
     }
     imgData.rewind();
+    Log.d(TAG, " bitmap width = " + bitmap.getWidth() + ", bitmap height = " + bitmap.getHeight());
     bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
     // Convert the image to floating point.
     int pixel = 0;
