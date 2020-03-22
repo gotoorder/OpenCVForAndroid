@@ -58,7 +58,7 @@ public class TFLiteImageClassifier implements Classifier {
   private static final int DIM_IMG_SIZE_X = 224;
   private static final int DIM_IMG_SIZE_Y = 224;
 
-  byte[][] labelProb;
+  float[][] labelProb;
 
   // Pre-allocated buffers.
   private Vector<String> labels = new Vector<String>();
@@ -108,7 +108,7 @@ public class TFLiteImageClassifier implements Classifier {
 
     c.imgData =
         ByteBuffer.allocateDirect(
-            DIM_BATCH_SIZE * DIM_IMG_SIZE_X * DIM_IMG_SIZE_Y * DIM_PIXEL_SIZE);
+            4 * DIM_BATCH_SIZE * DIM_IMG_SIZE_X * DIM_IMG_SIZE_Y * DIM_PIXEL_SIZE);
 
     c.imgData.order(ByteOrder.nativeOrder());
     try {
@@ -123,7 +123,7 @@ public class TFLiteImageClassifier implements Classifier {
     // Pre-allocate buffers.
     c.intValues = new int[inputSize * inputSize];
 
-    c.labelProb = new byte[1][c.labels.size()];
+    c.labelProb = new float[1][c.labels.size()];
 
     return c;
   }
@@ -135,7 +135,7 @@ public class TFLiteImageClassifier implements Classifier {
       return;
     }
     imgData.rewind();
-    Log.d(TAG, " bitmap width = " + bitmap.getWidth() + ", bitmap height = " + bitmap.getHeight());
+    Log.d(TAG, " bitmap width = " + bitmap.getWidth() + ", bitmap height = " + bitmap.getHeight() + "， intValues.length = " + intValues.length);
     bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
     // Convert the image to floating point.
     int pixel = 0;

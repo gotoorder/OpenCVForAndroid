@@ -114,6 +114,7 @@ public class TensorFlowClassifier implements Classifier {
         TraceCompat.beginSection("preprocessBitmap");
         // Preprocess the image data from 0-255 int to normalized float based
         // on the provided parameters.
+        Log.d(TAG, " bitmap width = " + bitmap.getWidth() + ", bitmap height = " + bitmap.getHeight() + "， intValues.length = " + intValues.length);
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         for (int i = 0; i < intValues.length; ++i) {
             final int val = intValues[i];

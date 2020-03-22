@@ -306,7 +306,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
 //            processTensorFlow(bitmap);
 
-//            processTensorflowLite(bitmap);
+            processTensorflowLite(bitmap);
 
             mResourcePicture.setRect(left, top, right, bottom, currentPhotoPath);
         } else {
@@ -372,18 +372,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 Mat src = new Mat();
                 Utils.bitmapToMat(bitmap, src);
 
-                Rect rect = new Rect(left, top, right - left, bottom - top);
-                src =new Mat(src,rect);
+//                Rect rect = new Rect(left, top, right - left, bottom - top);
+//                src =new Mat(src,rect);
 
 
                 //转成CV_8UC3格式
                 Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2RGB);
 
-                Mat mask = Mat.zeros(INPUT_SIZE, INPUT_SIZE, CvType.CV_8UC3);
+                Mat mask = Mat.zeros(src.rows(), src.cols(), CvType.CV_8UC3);
 
                 Imgproc.fillPoly(mask, matOfPoints, new Scalar(255, 255, 255));
 
-                Mat masked = new Mat(INPUT_SIZE, INPUT_SIZE, CvType.CV_8UC3);
+                Mat masked = new Mat(src.rows(), src.cols(), CvType.CV_8UC3);
                 Core.bitwise_and(src, mask, masked);
 
                 Bitmap resultBitmap = Bitmap.createBitmap(mask.cols(), mask.rows(), Bitmap.Config.ARGB_8888);
@@ -422,6 +422,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private void processTensorflowLite(Bitmap bitmap) {
+        long createScaledBitmapStart = System.currentTimeMillis();
+        bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
+        long createScaledBitmapEnd = System.currentTimeMillis();
+        Log.d(TAG, "processTensorflowLite create scaled bitmap time = " + (createScaledBitmapEnd - createScaledBitmapStart));
+
+
         final long startTime = SystemClock.uptimeMillis();
         final List<Classifier.Recognition> results = classifier.recognizeImage(bitmap);
         Log.d(TAG, "processTensorflowLite time = " + (SystemClock.uptimeMillis() - startTime));
