@@ -2,6 +2,7 @@ package com.raysee.opencv;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RawRes;
+import androidx.annotation.RequiresApi;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -16,6 +17,7 @@ import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
@@ -51,8 +53,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import static com.raysee.opencv.ImageUtils.getTestBitmap;
+import static com.raysee.opencv.ImageUtils.saveBitmap;
 
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
@@ -282,6 +288,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //        mResourcePicture.setBmpPath(mCurrentPhotoPath);
 
         onFaceDetect(mCurrentPhotoPath, originalBitmap);
+        //TODO for test
+//        new Thread(new Runnable() {
+//            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+//            @Override
+//            public void run() {
+//                for (String fileName: Objects.requireNonNull(ImageUtils.getTestFileNames())) {
+//                    processTensorflowLite(getTestBitmap(fileName));
+//                }
+//
+//            }
+//        }).start();
+
     }
 
     private void onFaceDetect(String currentPhotoPath, Bitmap originalBitmap) {
@@ -304,7 +322,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             Bitmap bitmap = processMask(faceList, originalBitmap);
             Log.d(TAG, "processMask time = " + (System.currentTimeMillis() - start));
 
-//            processTensorFlow(bitmap);
+            //TODO for test
+//            saveBitmap(bitmap);
 
             processTensorflowLite(bitmap);
 
@@ -421,6 +440,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mScore.setText(result);
     }
 
+    int num = 0;
     private void processTensorflowLite(Bitmap bitmap) {
         long createScaledBitmapStart = System.currentTimeMillis();
         bitmap = Bitmap.createScaledBitmap(bitmap, INPUT_SIZE, INPUT_SIZE, false);
@@ -442,13 +462,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //        readyForNextImage();
 
         Log.d(TAG, "Detect:  " + results.toString());
-        mScore.setText(results.toString());
+
 
         runOnUiThread(
                 new Runnable() {
                     @Override
                     public void run() {
-
+                        mScore.setText(results.toString() + num);
+                        num ++;
                     }
                 });
     }
