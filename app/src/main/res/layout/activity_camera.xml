@@ -56,8 +56,12 @@
 
     <ImageView
         android:id="@+id/test_result_mat"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="160dp"
+        android:layout_height="280dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:visibility="gone"
+        tools:visibility="visible"
         android:contentDescription="mat" />
 
 </RelativeLayout>

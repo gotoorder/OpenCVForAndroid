@@ -100,6 +100,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
 //        initTensorFlowAndLoadModel();
 
+        FaceSDKManager.getInstance().init(getApplicationContext());
+
         classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
 
         initViews();

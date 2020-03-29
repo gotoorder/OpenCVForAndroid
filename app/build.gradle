@@ -5,11 +5,13 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.raysee.opencv"
-        minSdkVersion 17
+        minSdkVersion 19
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        renderscriptTargetApi 21
 //        externalNativeBuild {
 //            cmake {
 //                cppFlags ""
@@ -21,6 +23,7 @@ android {
 //        }
         ndk {
             ldLibs "log"
+            abiFilters "armeabi-v7a"
         }
     }
     buildTypes {
@@ -47,8 +50,16 @@ android {
     }
 }
 
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+    mavenCentral()
+    mavenLocal()
+}
+
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'src/main/libs', include: ['*.jar', '*.aar'])
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     testImplementation 'junit:junit:4.12'
@@ -58,7 +69,13 @@ dependencies {
     implementation project(path: ':dlib')
 //    implementation fileTree(dir:"$buildDir/native-libs", include: 'native-libs.jar' )
     implementation 'org.tensorflow:tensorflow-android:1.13.1'
-    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+//    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+
+    implementation "com.quickbirdstudios:yuvtomat:1.1.0" // ImageReader.Format.YUV_420_888 to cv::Mat
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.50" // 上面的库是Kotlin的，所以要安装这个
+    implementation "com.mapzen:on-the-road:0.8.4"
+
+    implementation 'com.iqiyi.xcrash:xcrash-android-lib:2.4.9'
 }
 
 
