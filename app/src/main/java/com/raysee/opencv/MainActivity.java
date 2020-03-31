@@ -91,7 +91,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private static final float IMAGE_STD = 1;
     private static final String INPUT_NAME = "input.1";
     private static final String OUTPUT_NAME = "add_10";
-
+    private NumpyX mNumpyX;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -287,7 +287,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         Log.d(TAG, "originalBitmap.getWidth = " + originalBitmap.getWidth() + ", originalBitmap.getHeight = " + originalBitmap.getHeight());
 //        mResourcePicture.setBmpPath(mCurrentPhotoPath);
 
+        //面部及活体检测
         onFaceDetect(mCurrentPhotoPath, originalBitmap);
+
         //TODO for test
 //        new Thread(new Runnable() {
 //            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
@@ -299,6 +301,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //
 //            }
 //        }).start();
+
+        //TODO test tensorflow lite
+//        processTensorflowLite(originalBitmap);
 
     }
 
@@ -322,7 +327,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             Bitmap bitmap = processMask(faceList, originalBitmap);
             Log.d(TAG, "processMask time = " + (System.currentTimeMillis() - start));
 
-            //TODO for test
+            //TODO save for test
 //            saveBitmap(bitmap);
 
             processTensorflowLite(bitmap);
@@ -463,6 +468,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         Log.d(TAG, "Detect:  " + results.toString());
 
+        long softMaxStart = System.currentTimeMillis();
+        String result = softMax(results);
+
+        Log.d(TAG, "tensorflowlite result softMax time = " + (System.currentTimeMillis() - softMaxStart));
+
 
         runOnUiThread(
                 new Runnable() {
@@ -472,6 +482,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                         num ++;
                     }
                 });
+    }
+
+    private String softMax(List<Classifier.Recognition> recognitions) {
+//        Classifier.ClassifierComparator comparator = new Classifier.ClassifierComparator();
+//        Classifier.Recognition max = Collections.max(recognitions, comparator);
+//        Logger.d("tensorflowlite result max:  " + max);
+        if (mNumpyX == null) {
+            mNumpyX = new NumpyX();
+        }
+        String result = mNumpyX.softMax(recognitions);
+
+        Log.d(TAG,"tensorflowlite result numpy_x :  " + result);
+        return result;
     }
 
     // 等比缩放图片

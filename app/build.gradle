@@ -1,4 +1,6 @@
 apply plugin: 'com.android.application'
+// 应用插件
+apply plugin: 'com.chaquo.python'
 
 android {
     compileSdkVersion 29
@@ -16,11 +18,37 @@ android {
 //                arguments "-DANDROID_STL=c++_shared"
 //            }
 //        }
-//        ndk {
-//            abiFilters 'armeabi-v7a','arm64-v8a'
-//        }
+        ndk {
+            abiFilters 'armeabi-v7a','arm64-v8a'
+        }
         ndk {
             ldLibs "log"
+        }
+        // 指定python安装路径，以便使用python解释器。
+        // Chaquopy的license需要加入到local.properties中：chaquopy.license=AFJunB7Agtt7Nvn0Kvy3Ju_OB0_lUQF9qBPBHfwkIqGj
+        python {
+            //静态代理自动生成hello模块
+//            staticProxy "hello"
+            //Mac下需注释掉路径配置
+            /**
+             * Windows下Python路径，这里指定为python38的路径，与目前使用的Chaquopy7.0.2自带编译器一致，
+             * 这样能够在编译期生成.pyc文件，加快app运行速度， 如果不一致，app将在运行期编译.py来生成.pyc，增加耗时
+             */
+            buildPython "D:\\Python\\Python38\\python.exe"
+            pip {
+                install "numpy"
+
+                //下面的库暂时用不到，需要再打开
+//                install "Pillow"
+////                install "cmake"
+//                install "opencv-python"
+//                install "dlib"
+//                install "tensorflow"
+
+                //安装tensorflow timeout时可通过如下两种方式：直接加载本地或者通过requirements引入本地文件及其他参数的方式
+//                install "tensorflow-1.10.1-7-cp36-cp36m-android_15_armeabi_v7a.whl"
+//                install "-r", "requirements.txt"
+            }
         }
     }
     buildTypes {
@@ -58,7 +86,7 @@ dependencies {
     implementation project(path: ':dlib')
 //    implementation fileTree(dir:"$buildDir/native-libs", include: 'native-libs.jar' )
     implementation 'org.tensorflow:tensorflow-android:1.13.1'
-    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
+    implementation 'org.tensorflow:tensorflow-lite:2.1.0'
 }
 
 
