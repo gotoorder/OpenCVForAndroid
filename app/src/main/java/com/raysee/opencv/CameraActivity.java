@@ -32,9 +32,11 @@ import android.widget.Toast;
 
 import androidx.annotation.RequiresApi;
 
+import com.quickbirdstudios.yuv2mat.Yuv;
 import com.raysee.dlib.dlib.Constants;
 import com.raysee.dlib.dlib.FaceDet;
 import com.raysee.dlib.dlib.VisionDetRet;
+import com.raysee.opencv.bean.LivenessModel;
 
 import org.opencv.android.Utils;
 import org.opencv.core.CvType;
@@ -75,6 +77,7 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
     private FaceDet mFaceDet;
     private static final String TAG = "CameraActivity.rzc";
     private ImageView mTestResultMat;
+    private FastYUVtoRGB mFastYuvToRgb;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -174,46 +177,88 @@ public class CameraActivity extends BaseActivity implements ImageReader.OnImageA
                 return;
             }
 
-            if (isProcessingFrame) {
-                image.close();
-                return;
+            Mat mat = Yuv.rgb(image);  // 从YUV_420_888 到 Mat(RGB)，这里使用了第三方库，build.gradle中可见
+
+            Bitmap bitmap = Bitmap.createBitmap(previewWidth, previewHeight, Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mat,bitmap);
+            bitmap = ImageUtils.scaleBitmap(bitmap, 0.5f);
+            if (mFastYuvToRgb == null) {
+                mFastYuvToRgb = new FastYUVtoRGB(getApplicationContext(), true);
             }
-            isProcessingFrame = true;
+            bitmap = mFastYuvToRgb.rotate(bitmap);
+
+//            if (isProcessingFrame) {
+//                image.close();
+//                return;
+//            }
+//            isProcessingFrame = true;
 //            Trace.beginSection("imageAvailable");
-            final Image.Plane[] planes = image.getPlanes();
-            Log.d(TAG, "onImageAvailable planes length" + planes.length);
-            fillBytes(planes, yuvBytes);
-            yRowStride = planes[0].getRowStride();
-            final int uvRowStride = planes[1].getRowStride();
-            final int uvPixelStride = planes[1].getPixelStride();
+//            final Image.Plane[] planes = image.getPlanes();
+//            Log.d(TAG, "onImageAvailable planes length" + planes.length);
+//            fillBytes(planes, yuvBytes);
+//            yRowStride = planes[0].getRowStride();
+//            final int uvRowStride = planes[1].getRowStride();
+//            final int uvPixelStride = planes[1].getPixelStride();
 
-            imageConverter =
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            ImageUtils.convertYUV420ToARGB8888(
-                                    yuvBytes[0],
-                                    yuvBytes[1],
-                                    yuvBytes[2],
-                                    previewWidth,
-                                    previewHeight,
-                                    yRowStride,
-                                    uvRowStride,
-                                    uvPixelStride,
-                                    rgbBytes);
-                        }
-                    };
+//            imageConverter =
+//                    new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            ImageUtils.convertYUV420ToARGB8888(
+//                                    yuvBytes[0],
+//                                    yuvBytes[1],
+//                                    yuvBytes[2],
+//                                    previewWidth,
+//                                    previewHeight,
+//                                    yRowStride,
+//                                    uvRowStride,
+//                                    uvPixelStride,
+//                                    rgbBytes);
+//                        }
+//                    };
 
-            postInferenceCallback =
-                    new Runnable() {
-                        @Override
-                        public void run() {
+            FaceSDKManager.getInstance().onDetectCheck(bitmap, previewHeight, previewWidth, new FaceDetectCallBack() {
+                @Override
+                public void onFaceDetectCallback(LivenessModel livenessModel) {
+                }
+
+                @Override
+                public void onFaceDetectCallback(List<VisionDetRet> visionDetRet, Bitmap bitmap, String time) {
+                    if (bitmap != null) {
+                        mTestResultMat.setVisibility(View.VISIBLE);
+                        mTestResultMat.setImageBitmap(bitmap);
+                    }
+                }
+
+                @Override
+                public void onFaceDetectFailed() {
+
+                }
+
+                @Override
+                public void onTip(int code, String msg) {
+                }
+
+                @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR1)
+                @Override
+                public void onFaceDetectDarwCallback(LivenessModel livenessModel) {
+                }
+            });
+
+
+
+//            postInferenceCallback =
+//                    new Runnable() {
+//                        @Override
+//                        public void run() {
                             image.close();
-                            isProcessingFrame = false;
-                        }
-                    };
+//                            isProcessingFrame = false;
+//                        }
+//                    };
 
 //            processImage();
+
+            mat.release();
         } catch (final Exception e) {
             LOGGER.e(e, "Exception!");
 //            Trace.endSection();
