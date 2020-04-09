@@ -2,7 +2,6 @@ package com.raysee.opencv;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RawRes;
-import androidx.annotation.RequiresApi;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -10,14 +9,11 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.SystemClock;
@@ -53,11 +49,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import static com.raysee.opencv.ImageUtils.getTestBitmap;
 import static com.raysee.opencv.ImageUtils.saveBitmap;
 
 
@@ -83,7 +77,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     private static final String MODEL_FILE = "file:///android_asset/moilenetv2.pb";
     private static final String LABEL_FILE = "file:///android_asset/graph_label_strings.txt";
 
-    private static final String LITE_MODEL_FILE = "moilenetv2.tflite";
+    private static final String LITE_MODEL_FILE_RGB = "moilenetv2_ir.tflite";
+    private static final String LITE_MODEL_FILE_IR = "moilenetv2_ir.tflite";
+    private static final String LITE_MODEL_FILE_DEPTH= "moilenetv2_depth.tflite";
     private static final String LITE_LABEL_FILE = "label.txt";
 
     private static final int INPUT_SIZE = 224;
@@ -102,7 +98,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         FaceSDKManager.getInstance().init(getApplicationContext());
 
-        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE, LITE_LABEL_FILE, INPUT_SIZE);
+        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE_DEPTH, LITE_LABEL_FILE, INPUT_SIZE);
 
         initViews();
         if (mFaceDet == null) {
@@ -290,7 +286,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //        mResourcePicture.setBmpPath(mCurrentPhotoPath);
 
         //面部及活体检测
-        onFaceDetect(mCurrentPhotoPath, originalBitmap);
+//        onFaceDetect(mCurrentPhotoPath, originalBitmap);
 
         //TODO for test
 //        new Thread(new Runnable() {
@@ -305,7 +301,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //        }).start();
 
         //TODO test tensorflow lite
-//        processTensorflowLite(originalBitmap);
+        processTensorflowLite(originalBitmap);
 
     }
 

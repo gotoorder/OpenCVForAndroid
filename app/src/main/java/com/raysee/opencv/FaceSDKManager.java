@@ -17,7 +17,6 @@ import androidx.annotation.RequiresApi;
 
 import com.raysee.dlib.dlib.Constants;
 import com.raysee.dlib.dlib.FaceDet;
-import com.raysee.dlib.dlib.PedestrianDet;
 import com.raysee.dlib.dlib.VisionDetRet;
 import com.raysee.opencv.tensorflow_lite.TFLiteImageClassifier;
 import com.raysee.opencv.threadpool.ThreadPoolHelp;
@@ -64,7 +63,7 @@ public class FaceSDKManager {
     private int mframeNum = 0;
     private List<VisionDetRet> mFaceList;
     private static final String TAG = "FaceSDKManager";
-    public static final String MODEL_FILE = "moilenetv2.tflite";
+    public static final String MODEL_FILE = "moilenetv2_ir.tflite";
     public static final String LABEL_FILE = "label.txt";
 
     public static final int INPUT_SIZE = 224;
