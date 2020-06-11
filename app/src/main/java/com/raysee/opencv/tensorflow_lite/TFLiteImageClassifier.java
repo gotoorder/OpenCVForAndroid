@@ -147,6 +147,7 @@ public class TFLiteImageClassifier implements Classifier {
              *  NN API returned error ANEURALNETWORKS_BAD_DATA at line 1068 while setting new operand value.
              *  官方解释是：这些消息是由作为Pow操作的第二个操作数的标量引起的，导致广播本应可以工作的，但没有。
              *  应该是模型本身的问题，官方目前已通过增加保护来解决，但是没有合入最新版本的库中，因此本工程NNAPI暂时不可用
+             *  参考：https://github.com/tensorflow/tensorflow/issues/36645
              */
             c.tfLite = new Interpreter(loadModelFile(assetManager, modelFilename), tfliteOptions);
         } catch (Exception e) {
@@ -190,6 +191,7 @@ public class TFLiteImageClassifier implements Classifier {
         Log.d(TAG, "Timecost to put values into ByteBuffer: " + Long.toString(endTime - startTime));
     }
 
+    @SuppressLint("LongLogTag")
     @Override
     public List<Recognition> recognizeImage(final Bitmap bitmap) {
         // Log this method so that it can be analyzed with systrace.
