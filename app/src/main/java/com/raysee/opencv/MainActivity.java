@@ -98,7 +98,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         FaceSDKManager.getInstance().init(getApplicationContext());
 
-        classifier = TFLiteImageClassifier.create(getAssets(), LITE_MODEL_FILE_DEPTH, LITE_LABEL_FILE, INPUT_SIZE);
+        classifier = TFLiteImageClassifier.createByDelegata(getAssets(), LITE_MODEL_FILE_IR, LITE_LABEL_FILE, INPUT_SIZE, TFLiteImageClassifier.DELEGATE_TYPE_NNAPI);
 
         initViews();
         if (mFaceDet == null) {
@@ -300,7 +300,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //            }
 //        }).start();
 
-        //TODO test tensorflow lite
         processTensorflowLite(originalBitmap);
 
     }

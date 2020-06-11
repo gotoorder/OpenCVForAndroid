@@ -94,7 +94,7 @@ dependencies {
     implementation project(path: ':dlib')
 //    implementation fileTree(dir:"$buildDir/native-libs", include: 'native-libs.jar' )
     implementation 'org.tensorflow:tensorflow-android:1.13.1'
-    implementation 'org.tensorflow:tensorflow-lite:2.1.0'
+    implementation 'org.tensorflow:tensorflow-lite:2.2.0'
 
     implementation "com.quickbirdstudios:yuvtomat:1.1.0" // ImageReader.Format.YUV_420_888 to cv::Mat
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.50" // 上面的库是Kotlin的，所以要安装这个
